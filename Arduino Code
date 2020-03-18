@@ -1,0 +1,72 @@
+/*
+ * --------------------------------
+ *             MFRC522      Arduino
+ *             Reader/PCD   Nano v3
+ * Signal      Pin          Pin
+ * --------------------------------
+ * RST/Reset   RST          D9
+ * SPI SS      SDA(SS)      D10
+ * SPI MOSI    MOSI         D11
+ * SPI MISO    MISO         D12
+ * SPI SCK     SCK          D13
+*/
+
+// INCLUDE STATEMENTS
+
+#include <SPI.h>
+#include <MFRC522.h>
+
+// DEFINE STATEMENTS
+
+#define RST_PIN   9
+#define SS_PIN    10
+
+MFRC522 mfrc522(SS_PIN, RST_PIN);
+
+String read_rfid;
+String ok_rfid_1="67a7a7a";
+int signal_pin = 8;
+
+// ENABLE SERIAL MONITOR
+void setup() {
+    Serial.begin(9600);
+    while (!Serial);
+    SPI.begin();
+    mfrc522.PCD_Init();
+
+
+    digitalWrite (signal_pin, HIGH);
+    pinMode (signal_pin, OUTPUT);
+}
+
+// DUMP HEX TO SERIAL
+void dump_byte_array(byte *buffer, byte bufferSize) {
+  read_rfid="";
+  for (byte i = 0; i < bufferSize; i++) {
+    read_rfid=read_rfid + String(buffer[i], HEX);
+  }
+}
+
+void start_ignition() {
+  digitalWrite(signal_pin,LOW);
+
+}
+
+
+void loop () {
+
+    // CHECK FOR NEW CARDS
+  if ( ! mfrc522.PICC_IsNewCardPresent())
+    return;
+
+    // SELECT ONE OF THE CARDS
+  if ( ! mfrc522.PICC_ReadCardSerial())
+    return;
+
+  dump_byte_array(mfrc522.uid.uidByte, mfrc522.uid.size);
+  Serial.println(read_rfid);
+  if (read_rfid==ok_rfid_1) {
+    start_ignition();
+  }
+
+}
